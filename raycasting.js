@@ -13,7 +13,7 @@ const player = {
   hFov: null,
   speed: 0.1,
   rotation: 5,
-  radius: 10,
+  radius: 5,
 };
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
@@ -143,15 +143,38 @@ const rayCasting = () => {
   }
 };
 const rayCastingDDA = () => {};
+const renderPauseScreen = () => {
+  g.fillStyle = "black";
+  g.fillRect(0, 0, projection.width, projection.height);
+  g.fillStyle = "white";
+  const msg = "PAUSED, click anywhere to continue";
+  g.fillText(msg, projection.hWidth - msg.length * 2, projection.hHeight);
+};
 const start = () => {
-  document.addEventListener("keydown", (e) => setKey(e, true));
-  document.addEventListener("keyup", (e) => setKey(e, false));
-
-  setInterval(() => {
+  let mainLoop = setInterval(() => {
     clearScreen();
     playerInput();
     rayCasting();
   }, rayCastConfig.delay);
+  document.addEventListener("keydown", (e) => setKey(e, true));
+  document.addEventListener("keyup", (e) => setKey(e, false));
+  window.addEventListener("blur", () => {
+    if (mainLoop) {
+      clearInterval(mainLoop);
+      mainLoop = null;
+      clearScreen();
+      renderPauseScreen();
+    }
+  });
+  canvas.addEventListener("click", () => {
+    if (!mainLoop) {
+      mainLoop = setInterval(() => {
+        playerInput();
+        clearScreen();
+        rayCasting();
+      }, rayCastConfig.delay);
+    }
+  });
 };
 
 start();
