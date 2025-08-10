@@ -3,7 +3,7 @@ const screen = {
   height: window.innerHeight / 2,
   hWidth: null,
   hHeight: null,
-  scale: 4,
+  scale: 1,
 };
 const player = {
   fov: 60,
@@ -64,6 +64,7 @@ canvas.height = screen.height;
 document.body.appendChild(canvas);
 const g = canvas.getContext("2d");
 g.scale(screen.scale, screen.scale);
+g.translate(0.5, 0.5);
 const { cos, sin, sqrt, PI, floor } = Math;
 const rToD = (d) => (d * PI) / 180;
 const drawLine = (x1, y1, x2, y2, color) => {
