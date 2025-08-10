@@ -1,10 +1,27 @@
-const screen = { width: window.innerWidth / 2, height: window.innerHeight / 2 };
-const player = { fov: 60, angle: 90, x: 2, y: 2 };
+const screen = {
+  width: window.innerWidth / 2,
+  height: window.innerHeight / 2,
+  hWidth: null,
+  hHeight: null,
+};
+const player = { fov: 60, angle: 90, x: 2, y: 2, hFov: null };
 const rayCastConfig = {
   incAngle: player.fov / screen.width,
   precision: 64,
   delay: 30,
 };
+const map = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 1, 0, 1, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 1, 0, 1, 1, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+];
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
 player.hFov = player.fov / 2;
@@ -13,7 +30,8 @@ canvas.width = screen.width;
 canvas.height = screen.height;
 document.body.appendChild(canvas);
 const g = canvas.getContext("2d");
-const rToD = (d) => (d * Math.PI) / 180;
+const { cos, sin, sqrt, PI, floor } = Math;
+const rToD = (d) => (d * PI) / 180;
 const drawLine = (x1, y1, x2, y2, color) => {
   g.strokeStyle = color;
   g.beginPath();
@@ -22,7 +40,14 @@ const drawLine = (x1, y1, x2, y2, color) => {
   g.stroke();
 };
 const clearScreen = () => g.clearRect(0, 0, screen.width, screen.height);
-const rayCasting = () => {};
+const rayCasting = () => {
+  let rayAngle = player.angle - player.hFov;
+  for (let i = 0; i < screen.width; i++) {
+
+
+    rayAngle += rayCastConfig.incAngle;
+  }
+};
 const start = () =>
   setInterval(() => {
     clearScreen();
