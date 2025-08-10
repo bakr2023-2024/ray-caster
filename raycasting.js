@@ -90,10 +90,12 @@ const playerInput = ({ code }) => {
       rayCasting();
     }
   } else if (code == keys.left) {
+    if (player.angle <= 0) player.angle = 360;
     player.angle -= player.rotation;
     clearScreen();
     rayCasting();
   } else if (code == keys.right) {
+    if (player.angle >= 360) player.angle = 0;
     player.angle += player.rotation;
     clearScreen();
     rayCasting();
