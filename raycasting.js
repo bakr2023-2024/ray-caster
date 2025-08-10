@@ -4,11 +4,25 @@ const screen = {
   hWidth: null,
   hHeight: null,
 };
-const player = { fov: 60, angle: 90, x: 2, y: 2, hFov: null };
+const player = {
+  fov: 60,
+  angle: 90,
+  x: 2,
+  y: 2,
+  hFov: null,
+  speed: 0.5,
+  rotation: 5,
+};
 const rayCastConfig = {
   incAngle: player.fov / screen.width,
   precision: 64,
   delay: 30,
+};
+const keys = {
+  up: "KeyW",
+  down: "KeyS",
+  left: "KeyA",
+  right: "KeyD",
 };
 const map = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -40,6 +54,43 @@ const drawLine = (x1, y1, x2, y2, color) => {
   g.stroke();
 };
 const clearScreen = () => g.clearRect(0, 0, screen.width, screen.height);
+const playerInput = ({ code }) => {
+  if (code == keys.up) {
+    const playerCos = cos(rToD(player.angle)) * player.speed;
+    const playerSin = sin(rToD(player.angle)) * player.speed;
+    const newX = player.x + playerCos;
+    const newY = player.y + playerSin;
+    if (
+      newX >= 0 &&
+      newX < map.length &&
+      newY >= 0 &&
+      newY < map.length &&
+      !map[floor(newY)][floor(newX)]
+    ) {
+      player.y = newY;
+      player.x = newX;
+    }
+  } else if (code == keys.down) {
+    const playerCos = cos(rToD(player.angle)) * player.speed;
+    const playerSin = sin(rToD(player.angle)) * player.speed;
+    const newX = player.x - playerCos;
+    const newY = player.y - playerSin;
+    if (
+      newX >= 0 &&
+      newX < map.length &&
+      newY >= 0 &&
+      newY < map.length &&
+      !map[floor(newY)][floor(newX)]
+    ) {
+      player.y = newY;
+      player.x = newX;
+    }
+  } else if (code == keys.left) {
+    player.angle -= player.rotation;
+  } else if (code == keys.right) {
+    player.angle += player.rotation;
+  }
+};
 const rayCasting = () => {
   let rayAngle = player.angle - player.hFov;
   for (let i = 0; i < screen.width; i++) {
@@ -63,9 +114,12 @@ const rayCasting = () => {
     rayAngle += rayCastConfig.incAngle;
   }
 };
-const start = () =>
+const start = () => {
+  document.addEventListener("keydown", playerInput);
   setInterval(() => {
     clearScreen();
     rayCasting();
   }, rayCastConfig.delay);
-// start();
+};
+
+start();
