@@ -108,7 +108,9 @@ const rayCasting = () => {
       ray.x += cos(rayRad) / rayCastConfig.precision;
       ray.y += sin(rayRad) / rayCastConfig.precision;
     }
-    const wallDist = sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2);
+    const wallDist =
+      sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2) *
+      cos(rToD(player.angle - rayAngle));
     const wallHeight = floor(screen.hHeight / wallDist);
     drawLine(i, 0, i, screen.hHeight - wallHeight, "cyan");
     drawLine(
