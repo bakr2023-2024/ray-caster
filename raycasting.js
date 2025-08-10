@@ -43,8 +43,12 @@ const clearScreen = () => g.clearRect(0, 0, screen.width, screen.height);
 const rayCasting = () => {
   let rayAngle = player.angle - player.hFov;
   for (let i = 0; i < screen.width; i++) {
-
-
+    const ray = { x: player.x, y: player.y };
+    const rayRad = rToD(rayAngle);
+    while (!map[floor(ray.y)][floor(ray.x)]) {
+      ray.x += cos(rayRad) / rayCastConfig.precision;
+      ray.y += sin(rayRad) / rayCastConfig.precision;
+    }
     rayAngle += rayCastConfig.incAngle;
   }
 };
