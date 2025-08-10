@@ -50,16 +50,16 @@ const rayCasting = () => {
       ray.y += sin(rayRad) / rayCastConfig.precision;
     }
     const wallDist = sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2);
-    const wallHeight = floor(screen.height / wallDist);
-    drawLine(i, 0, i, screen.hHeight - wallHeight / 2, "cyan");
+    const wallHeight = floor(screen.hHeight / wallDist);
+    drawLine(i, 0, i, screen.hHeight - wallHeight, "cyan");
     drawLine(
       i,
-      screen.hHeight - wallHeight / 2,
+      screen.hHeight - wallHeight,
       i,
-      screen.hHeight + wallHeight / 2,
+      screen.hHeight + wallHeight,
       "red"
     );
-    drawLine(i, screen.hHeight + wallHeight / 2, i, screen.height, "green");
+    drawLine(i, screen.hHeight + wallHeight, i, screen.height, "green");
     rayAngle += rayCastConfig.incAngle;
   }
 };
@@ -68,3 +68,4 @@ const start = () =>
     clearScreen();
     rayCasting();
   }, rayCastConfig.delay);
+// start();
