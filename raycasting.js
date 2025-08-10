@@ -51,6 +51,15 @@ const rayCasting = () => {
     }
     const wallDist = sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2);
     const wallHeight = floor(screen.height / wallDist);
+    drawLine(i, 0, i, screen.hHeight - wallHeight / 2, "cyan");
+    drawLine(
+      i,
+      screen.hHeight - wallHeight / 2,
+      i,
+      screen.hHeight + wallHeight / 2,
+      "red"
+    );
+    drawLine(i, screen.hHeight + wallHeight / 2, i, screen.height, "green");
     rayAngle += rayCastConfig.incAngle;
   }
 };
