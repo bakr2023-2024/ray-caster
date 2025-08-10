@@ -1,0 +1,11 @@
+const screen = { width: window.innerWidth / 2, height: window.innerHeight / 2 };
+const player = { fov: 60, angle: 90, x: 2, y: 2 };
+const rayCastConfig = { incAngle: player.fov / screen.width, precision: 64 };
+screen.hWidth = screen.width / 2;
+screen.hHeight = screen.height / 2;
+player.hFov = player.fov / 2;
+const canvas = document.createElement("canvas");
+canvas.width = screen.width;
+canvas.height = screen.height;
+document.body.appendChild(canvas);
+const g = canvas.getContext("2d");
