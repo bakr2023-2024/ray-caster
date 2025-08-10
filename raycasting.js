@@ -1,6 +1,6 @@
 const screen = {
-  width: window.innerWidth / 2,
-  height: window.innerHeight / 2,
+  width: window.innerWidth,
+  height: window.innerHeight,
   hWidth: null,
   hHeight: null,
   scale: 1,
@@ -13,6 +13,7 @@ const player = {
   hFov: null,
   speed: 0.1,
   rotation: 5,
+  radius: 10,
 };
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
@@ -43,6 +44,14 @@ const keys = {
   },
   right: {
     code: "KeyD",
+    active: false,
+  },
+  rotLeft: {
+    code: "KeyQ",
+    active: false,
+  },
+  rotRight: {
+    code: "KeyE",
     active: false,
   },
 };
@@ -76,55 +85,29 @@ const drawLine = (x1, y1, x2, y2, color) => {
 };
 const clearScreen = () =>
   g.clearRect(0, 0, projection.width, projection.height);
-const movePlayer = () => {
-  if (keys.up.active) {
-    const playerCos = cos(rToD(player.angle)) * player.speed;
-    const playerSin = sin(rToD(player.angle)) * player.speed;
-    const newX = player.x + playerCos;
-    const newY = player.y + playerSin;
-    if (
-      newX >= 0 &&
-      newX < map.length &&
-      newY >= 0 &&
-      newY < map.length &&
-      !map[floor(newY)][floor(newX)]
-    ) {
-      player.y = newY;
-      player.x = newX;
-      clearScreen();
-      rayCasting();
-    }
-  }
-  if (keys.down.active) {
-    const playerCos = cos(rToD(player.angle)) * player.speed;
-    const playerSin = sin(rToD(player.angle)) * player.speed;
-    const newX = player.x - playerCos;
-    const newY = player.y - playerSin;
-    if (
-      newX >= 0 &&
-      newX < map.length &&
-      newY >= 0 &&
-      newY < map.length &&
-      !map[floor(newY)][floor(newX)]
-    ) {
-      player.y = newY;
-      player.x = newX;
-      clearScreen();
-      rayCasting();
-    }
-  }
-  if (keys.left.active) {
-    if (player.angle <= 0) player.angle = 360;
-    player.angle -= player.rotation;
-    clearScreen();
-    rayCasting();
-  }
-  if (keys.right.active) {
-    if (player.angle >= 360) player.angle = 0;
-    player.angle += player.rotation;
-    clearScreen();
-    rayCasting();
-  }
+const movePlayer = (angle, add) => {
+  const playerCos = cos(rToD(angle)) * player.speed;
+  const playerSin = sin(rToD(angle)) * player.speed;
+  const dx = add ? playerCos : -playerCos;
+  const dy = add ? playerSin : -playerSin;
+  const newX = player.x + dx;
+  const newY = player.y + dy;
+  const checkX = floor(newX + dx * player.radius);
+  const checkY = floor(newY + dy * player.radius);
+  if (checkX >= 0 && checkX < map.length && !map[floor(player.y)][checkX])
+    player.x = newX;
+  if (checkY >= 0 && checkY < map.length && !map[checkY][floor(player.x)])
+    player.y = newY;
+};
+const playerInput = () => {
+  if (keys.up.active) movePlayer(player.angle, true);
+  if (keys.down.active) movePlayer(player.angle, false);
+  if (keys.left.active) movePlayer(player.angle - 90, true);
+  if (keys.right.active) movePlayer(player.angle + 90, true);
+  if (keys.rotLeft.active)
+    player.angle = (player.angle - player.rotation + 360) % 360;
+  if (keys.rotRight.active)
+    player.angle = (player.angle + player.rotation) % 360;
 };
 const setKey = ({ code }, set) => {
   for (const keyName in keys) {
@@ -166,7 +149,7 @@ const start = () => {
 
   setInterval(() => {
     clearScreen();
-    movePlayer();
+    playerInput();
     rayCasting();
   }, rayCastConfig.delay);
 };
