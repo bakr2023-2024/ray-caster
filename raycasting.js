@@ -69,6 +69,8 @@ const playerInput = ({ code }) => {
     ) {
       player.y = newY;
       player.x = newX;
+      clearScreen();
+      rayCasting();
     }
   } else if (code == keys.down) {
     const playerCos = cos(rToD(player.angle)) * player.speed;
@@ -84,11 +86,17 @@ const playerInput = ({ code }) => {
     ) {
       player.y = newY;
       player.x = newX;
+      clearScreen();
+      rayCasting();
     }
   } else if (code == keys.left) {
     player.angle -= player.rotation;
+    clearScreen();
+    rayCasting();
   } else if (code == keys.right) {
     player.angle += player.rotation;
+    clearScreen();
+    rayCasting();
   }
 };
 const rayCasting = () => {
@@ -116,10 +124,8 @@ const rayCasting = () => {
 };
 const start = () => {
   document.addEventListener("keydown", playerInput);
-  setInterval(() => {
-    clearScreen();
-    rayCasting();
-  }, rayCastConfig.delay);
+  clearScreen();
+  rayCasting();
 };
 
 start();
