@@ -132,7 +132,6 @@ const setKey = ({ code }, set) => {
       break;
     }
   }
-  movePlayer();
 };
 const rayCasting = () => {
   let rayAngle = player.angle - player.hFov;
@@ -163,8 +162,12 @@ const rayCastingDDA = () => {};
 const start = () => {
   document.addEventListener("keydown", (e) => setKey(e, true));
   document.addEventListener("keyup", (e) => setKey(e, false));
-  clearScreen();
-  rayCasting();
+
+  setInterval(() => {
+    clearScreen();
+    movePlayer();
+    rayCasting();
+  }, rayCastConfig.delay);
 };
 
 start();
