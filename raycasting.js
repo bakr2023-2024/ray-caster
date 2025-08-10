@@ -49,6 +49,7 @@ const rayCasting = () => {
       ray.x += cos(rayRad) / rayCastConfig.precision;
       ray.y += sin(rayRad) / rayCastConfig.precision;
     }
+    const wallDist = sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2);
     rayAngle += rayCastConfig.incAngle;
   }
 };
