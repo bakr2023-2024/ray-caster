@@ -11,7 +11,7 @@ const player = {
   x: 2,
   y: 2,
   hFov: null,
-  speed: 0.5,
+  speed: 0.1,
   rotation: 5,
 };
 screen.hWidth = screen.width / 2;
@@ -29,10 +29,22 @@ const rayCastConfig = {
   delay: 30,
 };
 const keys = {
-  up: "KeyW",
-  down: "KeyS",
-  left: "KeyA",
-  right: "KeyD",
+  up: {
+    code: "KeyW",
+    active: false,
+  },
+  down: {
+    code: "KeyS",
+    active: false,
+  },
+  left: {
+    code: "KeyA",
+    active: false,
+  },
+  right: {
+    code: "KeyD",
+    active: false,
+  },
 };
 const map = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -63,8 +75,8 @@ const drawLine = (x1, y1, x2, y2, color) => {
 };
 const clearScreen = () =>
   g.clearRect(0, 0, projection.width, projection.height);
-const playerInput = ({ code }) => {
-  if (code == keys.up) {
+const movePlayer = () => {
+  if (keys.up.active) {
     const playerCos = cos(rToD(player.angle)) * player.speed;
     const playerSin = sin(rToD(player.angle)) * player.speed;
     const newX = player.x + playerCos;
@@ -81,7 +93,8 @@ const playerInput = ({ code }) => {
       clearScreen();
       rayCasting();
     }
-  } else if (code == keys.down) {
+  }
+  if (keys.down.active) {
     const playerCos = cos(rToD(player.angle)) * player.speed;
     const playerSin = sin(rToD(player.angle)) * player.speed;
     const newX = player.x - playerCos;
@@ -98,17 +111,28 @@ const playerInput = ({ code }) => {
       clearScreen();
       rayCasting();
     }
-  } else if (code == keys.left) {
+  }
+  if (keys.left.active) {
     if (player.angle <= 0) player.angle = 360;
     player.angle -= player.rotation;
     clearScreen();
     rayCasting();
-  } else if (code == keys.right) {
+  }
+  if (keys.right.active) {
     if (player.angle >= 360) player.angle = 0;
     player.angle += player.rotation;
     clearScreen();
     rayCasting();
   }
+};
+const setKey = ({ code }, set) => {
+  for (const keyName in keys) {
+    if (keys[keyName].code === code) {
+      keys[keyName].active = set;
+      break;
+    }
+  }
+  movePlayer();
 };
 const rayCasting = () => {
   let rayAngle = player.angle - player.hFov;
@@ -137,7 +161,8 @@ const rayCasting = () => {
 };
 const rayCastingDDA = () => {};
 const start = () => {
-  document.addEventListener("keydown", playerInput);
+  document.addEventListener("keydown", (e) => setKey(e, true));
+  document.addEventListener("keyup", (e) => setKey(e, false));
   clearScreen();
   rayCasting();
 };
