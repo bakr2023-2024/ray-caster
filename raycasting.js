@@ -3,6 +3,7 @@ const screen = {
   height: window.innerHeight / 2,
   hWidth: null,
   hHeight: null,
+  scale: 4,
 };
 const player = {
   fov: 60,
@@ -13,8 +14,17 @@ const player = {
   speed: 0.5,
   rotation: 5,
 };
+screen.hWidth = screen.width / 2;
+screen.hHeight = screen.height / 2;
+player.hFov = player.fov / 2;
+const projection = {
+  width: screen.width / screen.scale,
+  height: screen.height / screen.scale,
+  hWidth: screen.hWidth / screen.scale,
+  hHeight: screen.hHeight / screen.scale,
+};
 const rayCastConfig = {
-  incAngle: player.fov / screen.width,
+  incAngle: player.fov / projection.width,
   precision: 64,
   delay: 30,
 };
@@ -36,14 +46,12 @@ const map = [
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
-screen.hWidth = screen.width / 2;
-screen.hHeight = screen.height / 2;
-player.hFov = player.fov / 2;
 const canvas = document.createElement("canvas");
 canvas.width = screen.width;
 canvas.height = screen.height;
 document.body.appendChild(canvas);
 const g = canvas.getContext("2d");
+g.scale(screen.scale, screen.scale);
 const { cos, sin, sqrt, PI, floor } = Math;
 const rToD = (d) => (d * PI) / 180;
 const drawLine = (x1, y1, x2, y2, color) => {
@@ -53,7 +61,8 @@ const drawLine = (x1, y1, x2, y2, color) => {
   g.lineTo(x2, y2);
   g.stroke();
 };
-const clearScreen = () => g.clearRect(0, 0, screen.width, screen.height);
+const clearScreen = () =>
+  g.clearRect(0, 0, projection.width, projection.height);
 const playerInput = ({ code }) => {
   if (code == keys.up) {
     const playerCos = cos(rToD(player.angle)) * player.speed;
@@ -103,7 +112,7 @@ const playerInput = ({ code }) => {
 };
 const rayCasting = () => {
   let rayAngle = player.angle - player.hFov;
-  for (let i = 0; i < screen.width; i++) {
+  for (let i = 0; i < projection.width; i++) {
     const ray = { x: player.x, y: player.y };
     const rayRad = rToD(rayAngle);
     while (!map[floor(ray.y)][floor(ray.x)]) {
@@ -113,19 +122,20 @@ const rayCasting = () => {
     const wallDist =
       sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2) *
       cos(rToD(player.angle - rayAngle));
-    const wallHeight = floor(screen.hHeight / wallDist);
-    drawLine(i, 0, i, screen.hHeight - wallHeight, "cyan");
+    const wallHeight = floor(projection.hHeight / wallDist);
+    drawLine(i, 0, i, projection.hHeight - wallHeight, "cyan");
     drawLine(
       i,
-      screen.hHeight - wallHeight,
+      projection.hHeight - wallHeight,
       i,
-      screen.hHeight + wallHeight,
+      projection.hHeight + wallHeight,
       "red"
     );
-    drawLine(i, screen.hHeight + wallHeight, i, screen.height, "green");
+    drawLine(i, projection.hHeight + wallHeight, i, projection.height, "green");
     rayAngle += rayCastConfig.incAngle;
   }
 };
+const rayCastingDDA = () => {};
 const start = () => {
   document.addEventListener("keydown", playerInput);
   clearScreen();
