@@ -50,6 +50,7 @@ const rayCasting = () => {
       ray.y += sin(rayRad) / rayCastConfig.precision;
     }
     const wallDist = sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2);
+    const wallHeight = floor(screen.height / wallDist);
     rayAngle += rayCastConfig.incAngle;
   }
 };
