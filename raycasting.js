@@ -3,7 +3,6 @@ const screen = {
   height: window.innerHeight,
   hWidth: null,
   hHeight: null,
-  scale: 1,
 };
 const player = {
   fov: 60,
@@ -18,14 +17,8 @@ const player = {
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
 player.hFov = player.fov / 2;
-const projection = {
-  width: screen.width / screen.scale,
-  height: screen.height / screen.scale,
-  hWidth: screen.hWidth / screen.scale,
-  hHeight: screen.hHeight / screen.scale,
-};
 const rayCastConfig = {
-  incAngle: player.fov / projection.width,
+  incAngle: player.fov / screen.width,
   precision: 64,
   delay: 30,
 };
@@ -72,19 +65,10 @@ canvas.width = screen.width;
 canvas.height = screen.height;
 document.body.appendChild(canvas);
 const g = canvas.getContext("2d");
-g.scale(screen.scale, screen.scale);
-g.translate(0.5, 0.5);
+screen.imageData = g.createImageData(screen.width, screen.height);
+screen.buffer = screen.imageData.data;
 const { cos, sin, sqrt, PI, floor } = Math;
 const rToD = (d) => (d * PI) / 180;
-const drawLine = (x1, y1, x2, y2, color) => {
-  g.strokeStyle = color;
-  g.beginPath();
-  g.moveTo(x1, y1);
-  g.lineTo(x2, y2);
-  g.stroke();
-};
-const clearScreen = () =>
-  g.clearRect(0, 0, projection.width, projection.height);
 const movePlayer = (angle, add) => {
   const playerCos = cos(rToD(angle)) * player.speed;
   const playerSin = sin(rToD(angle)) * player.speed;
@@ -117,10 +101,19 @@ const setKey = ({ code }, set) => {
     }
   }
 };
+const drawLine = (x, y1, y2, color) => {
+  for (let y = y1 | 0; y < (y2 | 0); y++) {
+    const idx = 4 * (x + y * screen.width);
+    screen.buffer[idx] = color[0];
+    screen.buffer[idx + 1] = color[1];
+    screen.buffer[idx + 2] = color[2];
+    screen.buffer[idx + 3] = color[3];
+  }
+};
 const rayCasting = () => {
   let rayAngle = player.angle - player.hFov;
-  for (let i = 0; i < projection.width; i++) {
-    const ray = { x: player.x, y: player.y };
+  for (let i = 0; i < screen.width; i++) {
+    let ray = { x: player.x, y: player.y };
     const rayRad = rToD(rayAngle);
     while (!map[floor(ray.y)][floor(ray.x)]) {
       ray.x += cos(rayRad) / rayCastConfig.precision;
@@ -129,40 +122,44 @@ const rayCasting = () => {
     const wallDist =
       sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2) *
       cos(rToD(player.angle - rayAngle));
-    const wallHeight = floor(projection.hHeight / wallDist);
-    drawLine(i, 0, i, projection.hHeight - wallHeight, "cyan");
+    const wallHeight = floor(screen.hHeight / wallDist);
+    drawLine(i, 0, screen.hHeight - wallHeight, [0, 0, 255, 255]);
     drawLine(
       i,
-      projection.hHeight - wallHeight,
-      i,
-      projection.hHeight + wallHeight,
-      "red"
+      screen.hHeight - wallHeight,
+      screen.hHeight + wallHeight,
+      [255, 0, 0, 255]
     );
-    drawLine(i, projection.hHeight + wallHeight, i, projection.height, "green");
+    drawLine(i, screen.hHeight + wallHeight, screen.height, [0, 255, 0, 255]);
     rayAngle += rayCastConfig.incAngle;
   }
+
+  g.putImageData(screen.imageData, 0, 0);
 };
-const rayCastingDDA = () => {};
 const renderPauseScreen = () => {
-  g.fillStyle = "black";
-  g.fillRect(0, 0, projection.width, projection.height);
-  g.fillStyle = "white";
-  const msg = "PAUSED, click anywhere to continue";
-  g.fillText(msg, projection.hWidth - msg.length * 2, projection.hHeight);
+  g.fillStyle = "rgba(0, 0, 0, 0.5)";
+  g.fillRect(0, 0, screen.width, screen.height);
+  g.fillStyle = "#fff";
+  g.font = "bold 32px sans-serif";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(
+    "PAUSED, click anywhere to continue",
+    screen.width / 2,
+    screen.height / 2
+  );
 };
 const start = () => {
+  document.addEventListener("keydown", (e) => setKey(e, true));
+  document.addEventListener("keyup", (e) => setKey(e, false));
   let mainLoop = setInterval(() => {
-    clearScreen();
     playerInput();
     rayCasting();
   }, rayCastConfig.delay);
-  document.addEventListener("keydown", (e) => setKey(e, true));
-  document.addEventListener("keyup", (e) => setKey(e, false));
   window.addEventListener("blur", () => {
     if (mainLoop) {
       clearInterval(mainLoop);
       mainLoop = null;
-      clearScreen();
       renderPauseScreen();
     }
   });
@@ -170,7 +167,6 @@ const start = () => {
     if (!mainLoop) {
       mainLoop = setInterval(() => {
         playerInput();
-        clearScreen();
         rayCasting();
       }, rayCastConfig.delay);
     }
