@@ -11,8 +11,8 @@ const player = {
     x: -1,
     y: 0,
   },
-  speed: 0.1,
-  rotation: 0.1,
+  speed: 0.07,
+  rotation: 0.07,
 };
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
@@ -177,27 +177,28 @@ const renderPauseScreen = () => {
     screen.height / 2
   );
 };
+let running = true;
+
+const loop = () => {
+  if (!running) return;
+  playerInput();
+  rayCastingDDA();
+  requestAnimationFrame(loop);
+};
+
 const start = () => {
   document.addEventListener("keydown", (e) => setKey(e, true));
   document.addEventListener("keyup", (e) => setKey(e, false));
-  let mainLoop = setInterval(() => {
-    playerInput();
-    rayCastingDDA();
-  }, delay);
   window.addEventListener("blur", () => {
-    if (mainLoop) {
-      clearInterval(mainLoop);
-      mainLoop = null;
-      renderPauseScreen();
-    }
+    running = false;
+    renderPauseScreen();
   });
   canvas.addEventListener("click", () => {
-    if (!mainLoop) {
-      mainLoop = setInterval(() => {
-        playerInput();
-        rayCastingDDA();
-      }, delay);
+    if (!running) {
+      running = true;
+      requestAnimationFrame(loop);
     }
   });
+  requestAnimationFrame(loop);
 };
 start();
