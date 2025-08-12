@@ -5,23 +5,18 @@ const screen = {
   hHeight: null,
 };
 const player = {
-  fov: 60,
-  angle: 90,
   x: 2,
   y: 2,
-  hFov: null,
+  dir: {
+    x: -1,
+    y: 0,
+  },
   speed: 0.1,
-  rotation: 5,
-  radius: 5,
+  rotation: 0.1,
 };
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
-player.hFov = player.fov / 2;
-const rayCastConfig = {
-  incAngle: player.fov / screen.width,
-  precision: 64,
-  delay: 30,
-};
+delay = 25;
 const keys = {
   up: {
     code: "KeyW",
@@ -37,14 +32,6 @@ const keys = {
   },
   right: {
     code: "KeyD",
-    active: false,
-  },
-  rotLeft: {
-    code: "KeyQ",
-    active: false,
-  },
-  rotRight: {
-    code: "KeyE",
     active: false,
   },
 };
@@ -66,32 +53,13 @@ canvas.height = screen.height;
 document.body.appendChild(canvas);
 const g = canvas.getContext("2d");
 screen.imageData = g.createImageData(screen.width, screen.height);
-screen.buffer = screen.imageData.data;
-const { cos, sin, sqrt, PI, floor } = Math;
-const rToD = (d) => (d * PI) / 180;
-const movePlayer = (angle, add) => {
-  const playerCos = cos(rToD(angle)) * player.speed;
-  const playerSin = sin(rToD(angle)) * player.speed;
-  const dx = add ? playerCos : -playerCos;
-  const dy = add ? playerSin : -playerSin;
-  const newX = player.x + dx;
-  const newY = player.y + dy;
-  const checkX = floor(newX + dx * player.radius);
-  const checkY = floor(newY + dy * player.radius);
-  if (checkX >= 0 && checkX < map.length && !map[floor(player.y)][checkX])
-    player.x = newX;
-  if (checkY >= 0 && checkY < map.length && !map[checkY][floor(player.x)])
-    player.y = newY;
-};
+screen.buffer = new Uint32Array(screen.imageData.data.buffer);
+const { cos, sin, sqrt, floor, abs, min, max } = Math;
 const playerInput = () => {
-  if (keys.up.active) movePlayer(player.angle, true);
-  if (keys.down.active) movePlayer(player.angle, false);
-  if (keys.left.active) movePlayer(player.angle - 90, true);
-  if (keys.right.active) movePlayer(player.angle + 90, true);
-  if (keys.rotLeft.active)
-    player.angle = (player.angle - player.rotation + 360) % 360;
-  if (keys.rotRight.active)
-    player.angle = (player.angle + player.rotation) % 360;
+  if (keys.up.active) move(player, true);
+  if (keys.down.active) move(player, false);
+  if (keys.left.active) rotate(player.rotation);
+  if (keys.right.active) rotate(-player.rotation);
 };
 const setKey = ({ code }, set) => {
   for (const keyName in keys) {
@@ -101,39 +69,88 @@ const setKey = ({ code }, set) => {
     }
   }
 };
+const rgba = (r, g, b, a) => (a << 24) | (b << 16) | (g << 8) | r;
 const drawLine = (x, y1, y2, color) => {
+  const col = rgba(color[0], color[1], color[2], color[3]);
   for (let y = y1 | 0; y < (y2 | 0); y++) {
-    const idx = 4 * (x + y * screen.width);
-    screen.buffer[idx] = color[0];
-    screen.buffer[idx + 1] = color[1];
-    screen.buffer[idx + 2] = color[2];
-    screen.buffer[idx + 3] = color[3];
+    screen.buffer[x + y * screen.width] = col;
   }
 };
-const rayCasting = () => {
-  let rayAngle = player.angle - player.hFov;
-  for (let i = 0; i < screen.width; i++) {
-    let ray = { x: player.x, y: player.y };
-    const rayRad = rToD(rayAngle);
-    while (!map[floor(ray.y)][floor(ray.x)]) {
-      ray.x += cos(rayRad) / rayCastConfig.precision;
-      ray.y += sin(rayRad) / rayCastConfig.precision;
+const plane = {
+  x: 0,
+  y: 0.66,
+};
+const move = (obj, forward = true) => {
+  const dx = obj.dir.x * obj.speed;
+  const dy = obj.dir.y * obj.speed;
+  const newX = obj.x + (forward ? dx : -dx);
+  const newY = obj.y + (forward ? dy : -dy);
+  const checkX = floor(newX);
+  const checkY = floor(newY);
+  if (checkX >= 0 && checkX < map.length && !map[floor(obj.y)][checkX])
+    obj.x = newX;
+  if (checkY >= 0 && checkY < map.length && !map[checkY][floor(obj.x)])
+    obj.y = newY;
+};
+const rotate = (theta) => {
+  const cosT = cos(theta);
+  const sinT = sin(theta);
+  const oldDirX = player.dir.x;
+  player.dir.x = oldDirX * cosT - player.dir.y * sinT;
+  player.dir.y = oldDirX * sinT + player.dir.y * cosT;
+  const oldPlaneX = plane.x;
+  plane.x = oldPlaneX * cosT - plane.y * sinT;
+  plane.y = oldPlaneX * sinT + plane.y * cosT;
+};
+const rayCastingDDA = () => {
+  for (let x = 0; x < screen.width; x++) {
+    const cameraX = (2 * x) / screen.width - 1;
+    const ray = {
+      x: player.dir.x + plane.x * cameraX,
+      y: player.dir.y + plane.y * cameraX,
+    };
+    let mapX = floor(player.x);
+    let mapY = floor(player.y);
+    let side;
+    let dx = ray.x == 0 ? 1e10 : abs(1 / ray.x);
+    let dy = ray.y == 0 ? 1e10 : abs(1 / ray.y);
+    let stepX, stepY;
+    let sideDistX, sideDistY;
+    if (ray.x < 0) {
+      stepX = -1;
+      sideDistX = (player.x - mapX) * dx;
+    } else {
+      stepX = 1;
+      sideDistX = (mapX + 1.0 - player.x) * dx;
     }
-    const wallDist =
-      sqrt((player.x - ray.x) ** 2 + (player.y - ray.y) ** 2) *
-      cos(rToD(player.angle - rayAngle));
-    const wallHeight = floor(screen.hHeight / wallDist);
-    drawLine(i, 0, screen.hHeight - wallHeight, [0, 0, 255, 255]);
-    drawLine(
-      i,
-      screen.hHeight - wallHeight,
-      screen.hHeight + wallHeight,
-      [255, 0, 0, 255]
-    );
-    drawLine(i, screen.hHeight + wallHeight, screen.height, [0, 255, 0, 255]);
-    rayAngle += rayCastConfig.incAngle;
+    if (ray.y < 0) {
+      stepY = -1;
+      sideDistY = (player.y - mapY) * dy;
+    } else {
+      stepY = 1;
+      sideDistY = (mapY + 1.0 - player.y) * dy;
+    }
+    do {
+      if (sideDistX < sideDistY) {
+        sideDistX += dx;
+        mapX += stepX;
+        side = 0;
+      } else {
+        sideDistY += dy;
+        mapY += stepY;
+        side = 1;
+      }
+    } while (!map[mapY][mapX]);
+    const perpWallDist = side == 0 ? sideDistX - dx : sideDistY - dy;
+    const lineHeight = floor(screen.hHeight / perpWallDist);
+    let drawStart = -lineHeight + screen.hHeight;
+    if (drawStart < 0) drawStart = 0;
+    let drawEnd = lineHeight + screen.hHeight;
+    if (drawEnd >= screen.height) drawEnd = screen.height - 1;
+    drawLine(x, 0, drawStart, [0, 0, 255, 255]);
+    drawLine(x, drawStart, drawEnd, [side == 1 ? 127 : 255, 0, 0, 255]);
+    drawLine(x, drawEnd, screen.height, [0, 255, 0, 255]);
   }
-
   g.putImageData(screen.imageData, 0, 0);
 };
 const renderPauseScreen = () => {
@@ -154,8 +171,8 @@ const start = () => {
   document.addEventListener("keyup", (e) => setKey(e, false));
   let mainLoop = setInterval(() => {
     playerInput();
-    rayCasting();
-  }, rayCastConfig.delay);
+    rayCastingDDA();
+  }, delay);
   window.addEventListener("blur", () => {
     if (mainLoop) {
       clearInterval(mainLoop);
@@ -167,10 +184,9 @@ const start = () => {
     if (!mainLoop) {
       mainLoop = setInterval(() => {
         playerInput();
-        rayCasting();
-      }, rayCastConfig.delay);
+        rayCastingDDA();
+      }, delay);
     }
   });
 };
-
 start();
