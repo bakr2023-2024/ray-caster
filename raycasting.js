@@ -102,7 +102,13 @@ const rotate = (theta) => {
   plane.x = oldPlaneX * cosT - plane.y * sinT;
   plane.y = oldPlaneX * sinT + plane.y * cosT;
 };
+let lastTime = performance.now();
+let fps = 0;
 const rayCastingDDA = () => {
+  const now = performance.now();
+  fps = 1000 / (now - lastTime);
+  lastTime = now;
+
   for (let x = 0; x < screen.width; x++) {
     const cameraX = (2 * x) / screen.width - 1;
     const ray = {
@@ -152,7 +158,12 @@ const rayCastingDDA = () => {
     drawLine(x, drawEnd, screen.height, [0, 255, 0, 255]);
   }
   g.putImageData(screen.imageData, 0, 0);
+  g.fillStyle = "#fff";
+  g.font = "16px monospace";
+  g.textAlign = "right";
+  g.fillText(fps.toFixed(1) + " FPS", screen.width - 10, 20);
 };
+
 const renderPauseScreen = () => {
   g.fillStyle = "rgba(0, 0, 0, 0.5)";
   g.fillRect(0, 0, screen.width, screen.height);
