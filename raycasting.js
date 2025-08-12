@@ -102,26 +102,25 @@ const rotate = (theta) => {
   plane.x = oldPlaneX * cosT - plane.y * sinT;
   plane.y = oldPlaneX * sinT + plane.y * cosT;
 };
-let lastTime = performance.now();
-let fps = 0;
-const rayCastingDDA = () => {
-  const now = performance.now();
-  fps = 1000 / (now - lastTime);
-  lastTime = now;
 
+const rayCastingDDA = () => {
   for (let x = 0; x < screen.width; x++) {
     const cameraX = (2 * x) / screen.width - 1;
     const ray = {
       x: player.dir.x + plane.x * cameraX,
       y: player.dir.y + plane.y * cameraX,
     };
+
     let mapX = floor(player.x);
     let mapY = floor(player.y);
     let side;
+
     let dx = ray.x == 0 ? 1e10 : abs(1 / ray.x);
     let dy = ray.y == 0 ? 1e10 : abs(1 / ray.y);
+
     let stepX, stepY;
     let sideDistX, sideDistY;
+
     if (ray.x < 0) {
       stepX = -1;
       sideDistX = (player.x - mapX) * dx;
@@ -129,6 +128,7 @@ const rayCastingDDA = () => {
       stepX = 1;
       sideDistX = (mapX + 1.0 - player.x) * dx;
     }
+
     if (ray.y < 0) {
       stepY = -1;
       sideDistY = (player.y - mapY) * dy;
@@ -136,6 +136,7 @@ const rayCastingDDA = () => {
       stepY = 1;
       sideDistY = (mapY + 1.0 - player.y) * dy;
     }
+
     do {
       if (sideDistX < sideDistY) {
         sideDistX += dx;
@@ -147,23 +148,32 @@ const rayCastingDDA = () => {
         side = 1;
       }
     } while (!map[mapY][mapX]);
+
     const perpWallDist = side == 0 ? sideDistX - dx : sideDistY - dy;
     const lineHeight = floor(screen.hHeight / perpWallDist);
+
     let drawStart = -lineHeight + screen.hHeight;
     if (drawStart < 0) drawStart = 0;
     let drawEnd = lineHeight + screen.hHeight;
     if (drawEnd >= screen.height) drawEnd = screen.height - 1;
+
     drawLine(x, 0, drawStart, [0, 0, 255, 255]);
     drawLine(x, drawStart, drawEnd, [side == 1 ? 127 : 255, 0, 0, 255]);
     drawLine(x, drawEnd, screen.height, [0, 255, 0, 255]);
   }
+
   g.putImageData(screen.imageData, 0, 0);
+};
+
+let running = true;
+let lastTime = performance.now();
+let fps = 0;
+const drawFPS = () => {
   g.fillStyle = "#fff";
   g.font = "16px monospace";
   g.textAlign = "right";
   g.fillText(fps.toFixed(1) + " FPS", screen.width - 10, 20);
 };
-
 const renderPauseScreen = () => {
   g.fillStyle = "rgba(0, 0, 0, 0.5)";
   g.fillRect(0, 0, screen.width, screen.height);
@@ -177,28 +187,34 @@ const renderPauseScreen = () => {
     screen.height / 2
   );
 };
-let running = true;
-
 const loop = () => {
   if (!running) return;
+  const now = performance.now();
+  fps = 1000 / (now - lastTime);
+  lastTime = now;
   playerInput();
   rayCastingDDA();
+  drawFPS();
   requestAnimationFrame(loop);
 };
 
 const start = () => {
   document.addEventListener("keydown", (e) => setKey(e, true));
   document.addEventListener("keyup", (e) => setKey(e, false));
+
   window.addEventListener("blur", () => {
     running = false;
     renderPauseScreen();
   });
+
   canvas.addEventListener("click", () => {
     if (!running) {
       running = true;
       requestAnimationFrame(loop);
     }
   });
+
   requestAnimationFrame(loop);
 };
+
 start();
