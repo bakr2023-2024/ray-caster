@@ -11,8 +11,8 @@ const player = {
     x: -1,
     y: 0,
   },
-  speed: 0.07,
-  rotation: 0.07,
+  speed: 5,
+  rotation: 3,
 };
 screen.hWidth = screen.width / 2;
 screen.hHeight = screen.height / 2;
@@ -55,11 +55,11 @@ const g = canvas.getContext("2d");
 screen.imageData = g.createImageData(screen.width, screen.height);
 screen.buffer = new Uint32Array(screen.imageData.data.buffer);
 const { cos, sin, sqrt, floor, abs, min, max } = Math;
-const playerInput = () => {
-  if (keys.up.active) move(player, true);
-  if (keys.down.active) move(player, false);
-  if (keys.left.active) rotate(player.rotation);
-  if (keys.right.active) rotate(-player.rotation);
+const playerInput = (delta) => {
+  if (keys.up.active) move(player, delta, true);
+  if (keys.down.active) move(player, delta, false);
+  if (keys.left.active) rotate(player.rotation * delta);
+  if (keys.right.active) rotate(-player.rotation * delta);
 };
 const setKey = ({ code }, set) => {
   for (const keyName in keys) {
@@ -80,9 +80,9 @@ const plane = {
   x: 0,
   y: 0.66,
 };
-const move = (obj, forward = true) => {
-  const dx = obj.dir.x * obj.speed;
-  const dy = obj.dir.y * obj.speed;
+const move = (obj, delta, forward = true) => {
+  const dx = obj.dir.x * obj.speed * delta;
+  const dy = obj.dir.y * obj.speed * delta;
   const newX = obj.x + (forward ? dx : -dx);
   const newY = obj.y + (forward ? dy : -dy);
   const checkX = floor(newX);
@@ -190,9 +190,10 @@ const renderPauseScreen = () => {
 const loop = () => {
   if (!running) return;
   const now = performance.now();
-  fps = 1000 / (now - lastTime);
+  const delta = (now - lastTime) / 1000;
+  fps = 1 / delta;
   lastTime = now;
-  playerInput();
+  playerInput(delta);
   rayCastingDDA();
   drawFPS();
   requestAnimationFrame(loop);
