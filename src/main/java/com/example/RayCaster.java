@@ -82,7 +82,7 @@ public class RayCaster {
             stepY = 1;
             tdy = (mapY + 1.0 - posY) * dy;
         }
-        while (!map[mapY][mapX]) {
+        while (mapX >= 0 && mapX < map[0].length && mapY >= 0 && mapY < map.length && !map[mapY][mapX]) {
             if (tdx < tdy) {
                 tdx += dx;
                 mapX += stepX;
