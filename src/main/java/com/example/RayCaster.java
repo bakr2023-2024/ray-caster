@@ -14,11 +14,11 @@ public class RayCaster {
     private int width, height;
     private double cellWidth, cellHeight;
     private GraphicsContext g;
-    private int[][] map;
+    private boolean[][] map;
     private Result[] results;
     private double movSpeed, rotSpeed, radius;
 
-    public RayCaster(int startX, int startY, int endX, int endY, GraphicsContext g, int[][] map) {
+    public RayCaster(int startX, int startY, int endX, int endY, GraphicsContext g, boolean[][] map) {
         this.g = g;
         this.width = (int) g.getCanvas().getWidth();
         this.height = (int) g.getCanvas().getHeight();
@@ -48,7 +48,7 @@ public class RayCaster {
                 else if (x == endX && y == endY)
                     g.setFill(Color.FUCHSIA);
                 else
-                    g.setFill(map[y][x] == 0 ? Color.BLACK : Color.WHITE);
+                    g.setFill(!map[y][x] ? Color.BLACK : Color.WHITE);
                 g.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
             }
         }
@@ -82,7 +82,7 @@ public class RayCaster {
             stepY = 1;
             tdy = (mapY + 1.0 - posY) * dy;
         }
-        while (map[mapY][mapX] == 0) {
+        while (!map[mapY][mapX]) {
             if (tdx < tdy) {
                 tdx += dx;
                 mapX += stepX;
@@ -140,10 +140,10 @@ public class RayCaster {
         double dy = dirY * delta;
         int mapX = (int) (posX + dx + Math.signum(dx) * radius);
         int mapY = (int) (posY + dy + Math.signum(dy) * radius);
-        if (mapX >= 0 && mapX < map[0].length && map[(int) posY][mapX] == 0) {
+        if (mapX >= 0 && mapX < map[0].length && !map[(int) posY][mapX]) {
             posX += dx;
         }
-        if (mapY >= 0 && mapY < map.length && map[mapY][(int) posX] == 0) {
+        if (mapY >= 0 && mapY < map.length && !map[mapY][(int) posX]) {
             posY += dy;
         }
     }
