@@ -6,34 +6,60 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 public class RayCaster {
+    private final int startX, startY;
+    private final int endX, endY;
     private double posX, posY;
-    private int startX, startY;
-    private int endX, endY;
     private double dirX, dirY;
     private double planeX, planeY;
-    private int width, height;
-    private double cellWidth, cellHeight;
-    private GraphicsContext g;
-    private boolean[][] map;
-    private Result[] results;
-    private double movSpeed, rotSpeed, radius;
+    private final int width, height;
+    private final int mapWidth, mapHeight;
+    private final double cellWidth, cellHeight;
+    private final GraphicsContext g;
+    private final boolean[][] map;
+    private final Result[] results;
+    private final double movSpeed, rotSpeed, radius;
 
-    public RayCaster(int startX, int startY, int endX, int endY, GraphicsContext g, boolean[][] map) {
+    public RayCaster(int startX, int startY, int endX, int endY, GraphicsContext g, int[][] maze) {
         this.g = g;
         this.width = (int) g.getCanvas().getWidth();
         this.height = (int) g.getCanvas().getHeight();
-        this.cellWidth = g.getCanvas().getWidth() / map[0].length;
-        this.cellHeight = g.getCanvas().getHeight() / map.length;
-        this.startX = startX;
-        this.startY = startY;
-        this.endX = endX;
-        this.endY = endY;
+        this.mapWidth = 2 * maze[0].length + 1;
+        this.mapHeight = 2 * maze.length + 1;
+        this.cellWidth = g.getCanvas().getWidth() / mapWidth;
+        this.cellHeight = g.getCanvas().getHeight() / mapHeight;
+        map = new boolean[mapHeight][mapWidth];
+        setMap(maze);
+        this.startX = startX * 2 + 1;
+        this.startY = startY * 2 + 1;
+        this.endX = endX * 2 + 1;
+        this.endY = endY * 2 + 1;
         reset();
-        this.map = map;
         this.movSpeed = 5;
         this.rotSpeed = 3;
         this.radius = 0.15;
         this.results = new Result[width];
+    }
+
+    public void setMap(int[][] maze) {
+        for (int i = 0; i < mapHeight; i++)
+            for (int j = 0; j < mapWidth; j++)
+                map[i][j] = true;
+        for (int y = 0; y < maze.length; y++) {
+            for (int x = 0; x < maze[0].length; x++) {
+                int nx = 2 * x + 1;
+                int ny = 2 * y + 1;
+                map[ny][nx] = false;
+                int val = maze[y][x];
+                if ((val & 8) == 0 && ny > 0)
+                    map[ny - 1][nx] = false;
+                if ((val & 4) == 0 && nx < mapWidth - 1)
+                    map[ny][nx + 1] = false;
+                if ((val & 2) == 0 && ny < mapHeight - 1)
+                    map[ny + 1][nx] = false;
+                if ((val & 1) == 0 && nx > 0)
+                    map[ny][nx - 1] = false;
+            }
+        }
     }
 
     public void clear() {
@@ -41,8 +67,8 @@ public class RayCaster {
     }
 
     public void renderMap() {
-        for (int y = 0; y < map.length; y++) {
-            for (int x = 0; x < map[0].length; x++) {
+        for (int y = 0; y < mapHeight; y++) {
+            for (int x = 0; x < mapWidth; x++) {
                 if (x == startX && y == startY)
                     g.setFill(Color.BLUE);
                 else if (x == endX && y == endY)
@@ -82,7 +108,7 @@ public class RayCaster {
             stepY = 1;
             tdy = (mapY + 1.0 - posY) * dy;
         }
-        while (mapX >= 0 && mapX < map[0].length && mapY >= 0 && mapY < map.length && !map[mapY][mapX]) {
+        while (mapX >= 0 && mapX < mapWidth && mapY >= 0 && mapY < mapHeight && !map[mapY][mapX]) {
             if (tdx < tdy) {
                 tdx += dx;
                 mapX += stepX;
@@ -140,10 +166,10 @@ public class RayCaster {
         double dy = dirY * delta;
         int mapX = (int) (posX + dx + Math.signum(dx) * radius);
         int mapY = (int) (posY + dy + Math.signum(dy) * radius);
-        if (mapX >= 0 && mapX < map[0].length && !map[(int) posY][mapX]) {
+        if (mapX >= 0 && mapX < mapWidth && !map[(int) posY][mapX]) {
             posX += dx;
         }
-        if (mapY >= 0 && mapY < map.length && !map[mapY][(int) posX]) {
+        if (mapY >= 0 && mapY < mapHeight && !map[mapY][(int) posX]) {
             posY += dy;
         }
     }
