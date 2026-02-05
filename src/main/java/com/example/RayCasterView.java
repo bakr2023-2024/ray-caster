@@ -16,6 +16,7 @@ public class RayCasterView {
     private final RayCaster rc;
     private final AnimationTimer timer;
     private final int width, height;
+    private boolean showMap = false;
     private boolean running = false;
 
     public RayCasterView(int[][] map, int startX, int startY, int endX, int endY, int width, int height, Runnable cb) {
@@ -27,7 +28,12 @@ public class RayCasterView {
         Pane pane = new Pane(canvas);
         scene = new Scene(pane);
         scene.setOnKeyPressed((e) -> keys.put(e.getCode(), true));
-        scene.setOnKeyReleased((e) -> keys.put(e.getCode(), false));
+        scene.setOnKeyReleased((e) -> {
+            if (e.getCode() == KeyCode.TAB)
+                showMap = !showMap;
+            else
+                keys.put(e.getCode(), false);
+        });
         rc = new RayCaster(startX, startY, endX, endY, g, map);
         timer = new AnimationTimer() {
             private long lastTime = 0;
@@ -46,7 +52,7 @@ public class RayCasterView {
                         rc.move(true, dt);
                     if (keys.getOrDefault(KeyCode.S, false))
                         rc.move(false, dt);
-                    if (keys.getOrDefault(KeyCode.TAB, false)) {
+                    if (showMap) {
                         rc.renderMap();
                         rc.emitRays();
                     } else {
