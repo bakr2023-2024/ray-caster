@@ -60,7 +60,7 @@ public class RayCasterView {
                     }
                     g.setFill(Color.BLACK);
                     g.fillText(String.format("FPS: %.0f", 1.0 / dt), 10, 20);
-                    if (rc.isAtEnd()) {
+                    if (rc.isAtEnd() || !running) {
                         stop();
                         keys.clear();
                         rc.reset();
